@@ -2,7 +2,11 @@
 import * as vscode from "vscode";
 import axios from "axios";
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  const indexName = await vscode.window.showInputBox({
+    prompt: "Enter index name",
+  });
+
   let indexDisposable = vscode.commands.registerCommand(
     "extension.index",
     async () => {
@@ -20,16 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
 
       const selectedText = editor.document.getText(selection);
 
-      const indexName = await vscode.window.showInputBox({
-        prompt: "Enter index name",
-      });
-
       const notes = await vscode.window.showInputBox({ prompt: "Enter notes" });
       if (!notes) {
         return;
       }
       // Call the index API
-      callIndexAPI(selectedText, notes, indexName ?? "code")
+      callIndexAPI(selectedText, notes, indexName ? indexName : "code")
         .then(async () => {
           const newPosition = selection.end;
           const newSelection = new vscode.Selection(newPosition, newPosition);
@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (!query) {
         return;
       }
-      callQueryAPI(query)
+      callQueryAPI(query, indexName ? indexName : "code")
         .then(async (response) => {
           const options = response.map((value) => ({
             detail: value.page_content,
@@ -104,14 +104,15 @@ function callIndexAPI(
 }
 
 async function callQueryAPI(
-  query: string
+  query: string,
+  index_name: string
 ): Promise<Array<Record<string, any>>> {
   // Replace <QUERY_API_ENDPOINT> with the actual endpoint URL
   const endpoint = "http://0.0.0.0:8000/query";
 
   // Make a GET request to the API endpoint
   const response = await axios.post(endpoint, {
-    index_name: "code",
+    index_name,
     query,
   });
   return response.data;
