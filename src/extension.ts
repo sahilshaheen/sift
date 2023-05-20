@@ -5,6 +5,7 @@ import axios from "axios";
 export async function activate(context: vscode.ExtensionContext) {
   const indexName = await vscode.window.showInputBox({
     prompt: "Enter index name",
+    value: "code"
   });
 
   let indexDisposable = vscode.commands.registerCommand(
